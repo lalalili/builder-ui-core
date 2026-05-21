@@ -73,6 +73,16 @@ function onMultiValueChange(e: Event) {
   emit('update', { ...props.leaf, value: selected });
 }
 
+const valuePlaceholder = computed(() => {
+  const op = props.leaf.operator;
+  const type = fieldDef.value?.type;
+  if (op === 'contains') return '輸入關鍵字';
+  if (op === 'starts_with') return '開頭文字，例如：台北';
+  if (op === 'ends_with') return '結尾文字，例如：路';
+  if (type === 'number') return '輸入數值';
+  return '輸入值';
+});
+
 function tagInputDisplay(): string {
   return multiValueAsArray().join(', ');
 }
@@ -157,7 +167,7 @@ function onTagInputChange(e: Event) {
         :type="fieldDef?.type === 'number' ? 'number' : 'text'"
         :value="String(leaf.value ?? '')"
         @input="onValueChange(fieldDef?.type === 'number' ? Number(($event.target as HTMLInputElement).value) : ($event.target as HTMLInputElement).value)"
-        placeholder="值"
+        :placeholder="valuePlaceholder"
       />
     </template>
 
