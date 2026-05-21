@@ -32,6 +32,14 @@ const isMultiValue = computed(() =>
 const isEnum = computed(() => fieldDef.value?.type === 'enum');
 const isBoolean = computed(() => fieldDef.value?.type === 'boolean');
 
+// enum with options → multi-select; string/number → comma-separated text input
+const useEnumMultiSelect = computed(
+  () => isEnum.value && isMultiValue.value && (fieldDef.value?.options?.length ?? 0) > 0,
+);
+const useTagInput = computed(
+  () => isMultiValue.value && !useEnumMultiSelect.value,
+);
+
 function onFieldChange(key: string) {
   const newField = props.fields.find((f) => f.key === key);
   const ops = newField ? OPERATORS_BY_TYPE[newField.type] : [];
@@ -55,6 +63,7 @@ function onValueChange(val: unknown) {
 function multiValueAsArray(): string[] {
   const v = props.leaf.value;
   if (Array.isArray(v)) return v.map(String);
+  if (typeof v === 'string' && v) return v.split(',').map((s) => s.trim());
   return [];
 }
 
@@ -62,6 +71,19 @@ function onMultiValueChange(e: Event) {
   const select = e.target as HTMLSelectElement;
   const selected = Array.from(select.selectedOptions).map((o) => o.value);
   emit('update', { ...props.leaf, value: selected });
+}
+
+function tagInputDisplay(): string {
+  return multiValueAsArray().join(', ');
+}
+
+function onTagInputChange(e: Event) {
+  const raw = (e.target as HTMLInputElement).value;
+  const arr = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  emit('update', { ...props.leaf, value: arr });
 }
 </script>
 
@@ -80,9 +102,9 @@ function onMultiValueChange(e: Event) {
 
     <!-- Value input -->
     <template v-if="!noValue">
-      <!-- Enum multi-select (in / not_in) -->
+      <!-- Enum multi-select (in / not_in with predefined options) -->
       <select
-        v-if="isEnum && isMultiValue"
+        v-if="useEnumMultiSelect"
         class="rtb-select rtb-value-select"
         multiple
         :value="multiValueAsArray()"
@@ -92,6 +114,17 @@ function onMultiValueChange(e: Event) {
           {{ opt.label }}
         </option>
       </select>
+
+      <!-- Comma-separated tag input (in / not_in for string/number, or enum without options) -->
+      <input
+        v-else-if="useTagInput"
+        class="rtb-input rtb-value-input rtb-tag-input"
+        type="text"
+        :value="tagInputDisplay()"
+        @change="onTagInputChange"
+        placeholder="D31, D21（逗號分隔）"
+        title="多個值請用逗號分隔，例如：D31, D21"
+      />
 
       <!-- Enum single select -->
       <select

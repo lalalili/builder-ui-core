@@ -43,6 +43,8 @@ export const OPERATORS_BY_TYPE: Record<FieldType, Array<{ value: Operator; label
   string: [
     { value: '=', label: '等於' },
     { value: '!=', label: '不等於' },
+    { value: 'in', label: '包含於（IN）' },
+    { value: 'not_in', label: '不包含於（NOT IN）' },
     { value: 'contains', label: '包含' },
     { value: 'starts_with', label: '開頭為' },
     { value: 'ends_with', label: '結尾為' },
@@ -56,6 +58,8 @@ export const OPERATORS_BY_TYPE: Record<FieldType, Array<{ value: Operator; label
   number: [
     { value: '=', label: '等於' },
     { value: '!=', label: '不等於' },
+    { value: 'in', label: '包含於（IN）' },
+    { value: 'not_in', label: '不包含於（NOT IN）' },
     { value: '>', label: '大於' },
     { value: '>=', label: '大於等於' },
     { value: '<', label: '小於' },

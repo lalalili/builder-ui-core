@@ -107,6 +107,8 @@
 
 .rtb-value-select[multiple] { height: auto; min-height: 60px; padding: 4px; }
 
+.rtb-tag-input { min-width: 160px; }
+
 .rtb-add-btn {
   padding: 3px 10px;
   border: 1px solid oklch(88% 0.005 80);
