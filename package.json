@@ -1,0 +1,22 @@
+{
+  "name": "@lalalili/builder-ui-core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared Vue builder shell skeleton \u2014 used by survey-filament and email-campaign-filament",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "vitest": "^2.0.0",
+    "jsdom": "^25.0.0",
+    "@vue/test-utils": "^2.4.0",
+    "vue": "^3.4.0"
+  }
+}
