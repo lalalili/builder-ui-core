@@ -9,6 +9,7 @@ const fields: FieldDef[] = [
   { key: 'email', label: 'Email', type: 'string' },
   { key: 'score', label: '分數', type: 'number' },
   { key: 'status', label: '狀態', type: 'enum', options: [{ value: 'active', label: '啟用' }, { value: 'inactive', label: '停用' }] },
+  { key: 'purchase_at', label: '購買日期', type: 'date' },
 ];
 
 const emptyTree: RuleGroup = { op: 'AND', children: [] };
@@ -113,6 +114,34 @@ describe('RuleTreeBuilder', () => {
     });
     expect(wrapper.find('.rtb-value-input').exists()).toBe(false);
     expect(wrapper.find('.rtb-value-select').exists()).toBe(false);
+  });
+
+  it('renders date input for date field type', () => {
+    const tree: RuleGroup = {
+      op: 'AND',
+      children: [{ field: 'purchase_at', operator: '>', value: '2024-01-01' }],
+    };
+    const wrapper = mount(RuleTreeBuilder, {
+      props: { modelValue: tree, availableFields: fields },
+    });
+    expect(wrapper.find('input[type="date"]').exists()).toBe(true);
+    expect((wrapper.find('input[type="date"]').element as HTMLInputElement).value).toBe('2024-01-01');
+  });
+
+  it('date operators include 晚於 and 早於', () => {
+    const tree: RuleGroup = {
+      op: 'AND',
+      children: [{ field: 'purchase_at', operator: '>', value: '2024-01-01' }],
+    };
+    const wrapper = mount(RuleTreeBuilder, {
+      props: { modelValue: tree, availableFields: fields },
+    });
+    const opOptions = wrapper.find('.rtb-op-select').findAll('option');
+    const labels = opOptions.map((o) => o.text());
+    expect(labels).toContain('晚於');
+    expect(labels).toContain('早於');
+    expect(labels).toContain('等於');
+    expect(labels).toContain('為空');
   });
 
   it('emits update:modelValue on change', async () => {

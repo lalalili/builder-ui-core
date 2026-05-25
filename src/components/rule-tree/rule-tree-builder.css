@@ -30,7 +30,8 @@
   background: oklch(97.5% 0.003 95);
   border-bottom: 1px solid var(--c-line);
 }
-.rtb-group-label { font-size: 12px; color: oklch(55% 0.006 80); flex: 1; }
+.rtb-group-label { font-size: 12px; color: oklch(55% 0.006 80); }
+.rtb-op-hint { font-size: 11px; color: oklch(60% 0.006 80); flex: 1; }
 
 .rtb-op-toggle {
   padding: 3px 10px;
@@ -58,10 +59,41 @@
 .rtb-group-body {
   display: flex;
   flex-direction: column;
-  gap: 1px;
   padding: 8px;
   background: oklch(98% 0.003 95);
 }
+
+/* ── Drag-and-drop ── */
+.rtb-drop-zone {
+  height: 4px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  transition: height 120ms, background 120ms, border-color 120ms;
+}
+.rtb-drop-zone.is-active {
+  height: 20px;
+  background: var(--c-accent2);
+  border: 1.5px dashed var(--c-accent);
+}
+.rtb-group-empty.is-drop-target {
+  background: var(--c-accent2);
+  border: 1.5px dashed var(--c-accent);
+  border-radius: 4px;
+  color: var(--c-accent);
+}
+.rtb-leaf.is-dragging,
+.rtb-group.is-dragging { opacity: 0.35; }
+
+.rtb-drag-handle {
+  cursor: grab;
+  color: oklch(75% 0.005 80);
+  font-size: 14px;
+  user-select: none;
+  flex-shrink: 0;
+  padding: 0 2px;
+  line-height: 1;
+}
+.rtb-drag-handle:active { cursor: grabbing; }
 
 .rtb-group-empty {
   padding: 12px 16px;
@@ -119,10 +151,14 @@
   color: oklch(40% 0.008 80);
   transition: all 120ms;
 }
-.rtb-add-btn:hover {
+.rtb-add-btn:hover:not(:disabled) {
   background: var(--c-accent2);
   border-color: var(--c-accent);
   color: var(--c-accent);
+}
+.rtb-add-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
 }
 
 .rtb-remove-btn {

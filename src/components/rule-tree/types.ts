@@ -1,4 +1,4 @@
-export type FieldType = 'string' | 'boolean' | 'number' | 'enum'
+export type FieldType = 'string' | 'boolean' | 'number' | 'enum' | 'date'
 
 export interface FieldDef {
   key: string
@@ -72,5 +72,15 @@ export const OPERATORS_BY_TYPE: Record<FieldType, Array<{ value: Operator; label
     { value: 'not_in', label: '不包含於' },
     { value: '=', label: '等於' },
     { value: '!=', label: '不等於' },
+  ],
+  date: [
+    { value: '=', label: '等於' },
+    { value: '!=', label: '不等於' },
+    { value: '>', label: '晚於' },
+    { value: '>=', label: '晚於或等於' },
+    { value: '<', label: '早於' },
+    { value: '<=', label: '早於或等於' },
+    { value: 'is_null', label: '為空' },
+    { value: 'is_not_null', label: '不為空' },
   ],
 }

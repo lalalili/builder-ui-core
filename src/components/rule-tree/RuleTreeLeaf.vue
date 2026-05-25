@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
 import type { FieldDef, RuleLeaf, Operator } from './types';
 import { OPERATORS_BY_TYPE } from './types';
 
@@ -7,6 +7,7 @@ const props = defineProps<{
   leaf: RuleLeaf;
   fields: FieldDef[];
   depth: number;
+  leafPath: number[];
 }>();
 
 const emit = defineEmits<{
@@ -14,6 +15,33 @@ const emit = defineEmits<{
   remove: [];
 }>();
 
+// ── Drag-and-drop inject ─────────────────────────────────────────────────────
+const dragState = inject<{ path: number[] | null }>('rtbDragState')!;
+const startDrag = inject<(path: number[]) => void>('rtbStartDrag')!;
+const endDrag = inject<() => void>('rtbEndDrag')!;
+
+function onDragStart(e: DragEvent) {
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+  }
+  startDrag(props.leafPath);
+}
+
+function onDragEnd() {
+  endDrag();
+}
+
+const isDragging = computed(() => {
+  const p = dragState.path;
+  return (
+    p !== null &&
+    p.length === props.leafPath.length &&
+    p.every((v, i) => props.leafPath[i] === v)
+  );
+});
+
+// ── Field / operator / value ─────────────────────────────────────────────────
 const fieldDef = computed(() => props.fields.find((f) => f.key === props.leaf.field) ?? null);
 
 const operators = computed(() => {
@@ -31,6 +59,7 @@ const isMultiValue = computed(() =>
 
 const isEnum = computed(() => fieldDef.value?.type === 'enum');
 const isBoolean = computed(() => fieldDef.value?.type === 'boolean');
+const isDate = computed(() => fieldDef.value?.type === 'date');
 
 // enum with options → multi-select; string/number → comma-separated text input
 const useEnumMultiSelect = computed(
@@ -80,6 +109,7 @@ const valuePlaceholder = computed(() => {
   if (op === 'starts_with') return '開頭文字，例如：台北';
   if (op === 'ends_with') return '結尾文字，例如：路';
   if (type === 'number') return '輸入數值';
+  if (type === 'date') return 'YYYY-MM-DD';
   return '輸入值';
 });
 
@@ -98,7 +128,15 @@ function onTagInputChange(e: Event) {
 </script>
 
 <template>
-  <div class="rtb-leaf">
+  <div class="rtb-leaf" :class="{ 'is-dragging': isDragging }">
+    <span
+      class="rtb-drag-handle"
+      title="拖曳移動規則"
+      draggable="true"
+      @dragstart="onDragStart"
+      @dragend="onDragEnd"
+    >⠿</span>
+
     <!-- Field select -->
     <select class="rtb-select rtb-field-select" :value="leaf.field" @change="onFieldChange(($event.target as HTMLSelectElement).value)">
       <option value="" disabled>選擇欄位</option>
@@ -159,6 +197,15 @@ function onTagInputChange(e: Event) {
         <option value="true">是</option>
         <option value="false">否</option>
       </select>
+
+      <!-- Date input -->
+      <input
+        v-else-if="isDate"
+        class="rtb-input rtb-value-input rtb-date-input"
+        type="date"
+        :value="String(leaf.value ?? '')"
+        @change="onValueChange(($event.target as HTMLInputElement).value)"
+      />
 
       <!-- Text / number input -->
       <input
