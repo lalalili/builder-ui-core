@@ -179,3 +179,42 @@
   background: oklch(94% 0.05 27);
   color: var(--c-danger);
 }
+
+/* ── Relative date input ── */
+.rtb-date-mode-btn {
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid oklch(88% 0.005 80);
+  border-radius: 5px;
+  background: white;
+  font-size: 11px;
+  cursor: pointer;
+  color: oklch(50% 0.008 80);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 120ms;
+}
+.rtb-date-mode-btn:hover {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+  background: var(--c-accent2);
+}
+.rtb-date-mode-btn.is-relative {
+  background: var(--c-accent2);
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+  font-weight: 600;
+}
+
+.rtb-relative-offset-input {
+  width: 68px;
+  flex-shrink: 0;
+}
+
+.rtb-relative-date-preview {
+  font-size: 11.5px;
+  color: var(--c-accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0 2px;
+}

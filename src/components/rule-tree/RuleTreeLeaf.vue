@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue';
-import type { FieldDef, RuleLeaf, Operator } from './types';
-import { OPERATORS_BY_TYPE } from './types';
+import type { FieldDef, RuleLeaf, Operator, RelativeDateValue } from './types';
+import { OPERATORS_BY_TYPE, isRelativeDateValue } from './types';
 
 const props = defineProps<{
   leaf: RuleLeaf;
@@ -60,6 +60,32 @@ const isMultiValue = computed(() =>
 const isEnum = computed(() => fieldDef.value?.type === 'enum');
 const isBoolean = computed(() => fieldDef.value?.type === 'boolean');
 const isDate = computed(() => fieldDef.value?.type === 'date');
+const isRelativeDate = computed(() => isDate.value && isRelativeDateValue(props.leaf.value));
+
+function relativeDateOffset(): number {
+  return isRelativeDateValue(props.leaf.value) ? props.leaf.value.offset : 0;
+}
+
+function toggleDateMode() {
+  if (isRelativeDate.value) {
+    emit('update', { ...props.leaf, value: '' });
+  } else {
+    const rdv: RelativeDateValue = { type: 'relative_date', offset: 0, unit: 'day' };
+    emit('update', { ...props.leaf, value: rdv });
+  }
+}
+
+function onRelativeOffsetChange(e: Event) {
+  const raw = (e.target as HTMLInputElement).value;
+  const offset = raw === '' ? 0 : parseInt(raw, 10);
+  const rdv: RelativeDateValue = { type: 'relative_date', offset: isNaN(offset) ? 0 : offset, unit: 'day' };
+  emit('update', { ...props.leaf, value: rdv });
+}
+
+function relativeOffsetLabel(offset: number): string {
+  if (offset === 0) return 'today'
+  return offset > 0 ? `today + ${offset} 天` : `today − ${Math.abs(offset)} 天`
+}
 
 // enum with options → multi-select; string/number → comma-separated text input
 const useEnumMultiSelect = computed(
@@ -198,14 +224,35 @@ function onTagInputChange(e: Event) {
         <option value="false">否</option>
       </select>
 
-      <!-- Date input -->
-      <input
-        v-else-if="isDate"
-        class="rtb-input rtb-value-input rtb-date-input"
-        type="date"
-        :value="String(leaf.value ?? '')"
-        @change="onValueChange(($event.target as HTMLInputElement).value)"
-      />
+      <!-- Date input (absolute or relative) -->
+      <template v-else-if="isDate">
+        <button
+          type="button"
+          class="rtb-date-mode-btn"
+          :class="{ 'is-relative': isRelativeDate }"
+          :title="isRelativeDate ? '切換為固定日期' : '切換為相對日期（today±N）'"
+          @click="toggleDateMode"
+        >{{ isRelativeDate ? '相對' : '固定' }}</button>
+        <!-- Relative date: offset number input -->
+        <input
+          v-if="isRelativeDate"
+          class="rtb-input rtb-value-input rtb-relative-offset-input"
+          type="number"
+          :value="relativeDateOffset()"
+          placeholder="0"
+          title="正數 = 未來天數，負數 = 過去天數，0 = today"
+          @change="onRelativeOffsetChange"
+        />
+        <span v-if="isRelativeDate" class="rtb-relative-date-preview">{{ relativeOffsetLabel(relativeDateOffset()) }}</span>
+        <!-- Absolute date picker -->
+        <input
+          v-else
+          class="rtb-input rtb-value-input rtb-date-input"
+          type="date"
+          :value="String(leaf.value ?? '')"
+          @change="onValueChange(($event.target as HTMLInputElement).value)"
+        />
+      </template>
 
       <!-- Text / number input -->
       <input

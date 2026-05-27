@@ -1,5 +1,20 @@
 export type FieldType = 'string' | 'boolean' | 'number' | 'enum' | 'date'
 
+export interface RelativeDateValue {
+  type: 'relative_date'
+  offset: number
+  unit: 'day'
+}
+
+export function isRelativeDateValue(v: unknown): v is RelativeDateValue {
+  return (
+    typeof v === 'object' &&
+    v !== null &&
+    (v as RelativeDateValue).type === 'relative_date' &&
+    typeof (v as RelativeDateValue).offset === 'number'
+  )
+}
+
 export interface FieldDef {
   key: string
   label: string
