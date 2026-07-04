@@ -51,6 +51,8 @@ defineProps<{
   border: 1px solid var(--c-line);
   overflow: hidden;
   height: 100%;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   color-scheme: light;
@@ -169,12 +171,15 @@ defineProps<{
 /* ── Body layout ── */
 .sb-body {
   display: grid;
-  grid-template-columns: 56px 1fr 360px;
+  grid-template-columns: 56px minmax(0, 1fr) 360px;
   flex: 1;
   min-height: 0;
   overflow: hidden;
 }
 .is-preview .sb-body { grid-template-columns: 1fr; }
+@media (max-width: 1365px) {
+  .sb-body { grid-template-columns: 56px minmax(0, 1fr) 320px; }
+}
 
 /* ── Left rail ── */
 .sb-rail {

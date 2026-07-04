@@ -16,7 +16,10 @@ const RuleTreeBuilderElement = defineCustomElement({
 
   setup(props: { availableFields: string; value: string }, { emit }: { emit: (e: 'change', v: string) => void }) {
     const fields = computed<FieldDef[]>(() => {
-      try { return JSON.parse(props.availableFields) ?? []; } catch { return []; }
+      try { return JSON.parse(props.availableFields) ?? []; } catch (error) {
+        console.error('[rule-tree-builder] availableFields JSON 解析失敗，改用空欄位清單', error);
+        return [];
+      }
     });
 
     const tree = ref<RuleGroup>(parseTree(props.value));
@@ -32,7 +35,9 @@ const RuleTreeBuilderElement = defineCustomElement({
       try {
         const node = v ? JSON.parse(v) : null;
         return node && isGroup(node) ? (node as RuleGroup) : { op: 'AND', children: [] };
-      } catch {
+      } catch (error) {
+        // 靜默丟資料很危險：解析失敗代表儲存的規則樹已損壞，改用空樹前先留下可診斷的錯誤。
+        console.error('[rule-tree-builder] value JSON 解析失敗，改用空規則樹（原值未被覆寫，重新儲存才會覆蓋）', error);
         return { op: 'AND', children: [] };
       }
     }
