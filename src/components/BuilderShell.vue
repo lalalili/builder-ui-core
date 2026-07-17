@@ -14,34 +14,9 @@ defineProps<{
 </template>
 
 <style>
-/* ── Design tokens ── */
+@import '../styles/builder-tokens.css';
+
 .sb-root {
-  --c-bg:      oklch(98.4% 0.004 95);
-  --c-surface: oklch(100% 0 0);
-  --c-s2:      oklch(97% 0.004 95);
-  --c-s3:      oklch(94.5% 0.005 95);
-  --c-line:    oklch(91% 0.005 95);
-  --c-line2:   oklch(87% 0.006 95);
-  --c-ink:     oklch(22% 0.008 80);
-  --c-ink2:    oklch(40% 0.008 80);
-  --c-ink3:    oklch(58% 0.008 80);
-  --c-ink4:    oklch(72% 0.006 80);
-
-  --c-accent:  oklch(54% 0.16 268);
-  --c-accent-h:oklch(48% 0.17 268);
-  --c-accent2: oklch(95% 0.04 268);
-  --c-accent3: oklch(89% 0.07 268);
-
-  --c-warn:    oklch(70% 0.13 70);
-  --c-danger:  oklch(58% 0.18 27);
-
-  --r1: 6px; --r2: 10px; --r3: 14px;
-  --shadow1: 0 1px 2px oklch(0% 0 0 / .05);
-  --shadow2: 0 4px 14px oklch(0% 0 0 / .06);
-
-  --font: "Helvetica Neue", Helvetica, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-
   font-family: var(--font);
   color: var(--c-ink);
   font-size: 14px;
@@ -55,7 +30,6 @@ defineProps<{
   min-height: 0;
   display: flex;
   flex-direction: column;
-  color-scheme: light;
 }
 
 /* ── Topbar ── */
@@ -118,7 +92,7 @@ defineProps<{
 }
 .sb-btn:hover { background: var(--c-s2); }
 .sb-btn.primary { background: var(--c-ink); color: var(--c-surface); border-color: var(--c-ink); }
-.sb-btn.primary:hover { background: oklch(15% 0.008 80); }
+.sb-btn.primary:hover { background: var(--c-ink-h); }
 .sb-btn.accent { background: var(--c-accent); color: white; border-color: var(--c-accent); }
 .sb-btn.accent:hover { background: var(--c-accent-h); }
 .sb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -126,40 +100,40 @@ defineProps<{
 /* ── Errors panel ── */
 .sb-errors {
   padding: 10px 20px;
-  background: oklch(98% 0.015 27);
-  border-bottom: 2px solid oklch(80% 0.08 27);
-  font-size: 12.5px; color: oklch(40% 0.15 27);
+  background: var(--c-danger-bg);
+  border-bottom: 2px solid var(--c-danger-line);
+  font-size: 12.5px; color: var(--c-danger-ink);
   flex-shrink: 0;
 }
 .sb-errors-header { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
-.sb-errors-icon { font-size: 15px; line-height: 1; color: oklch(58% 0.18 27); flex-shrink: 0; }
-.sb-errors-title { font-weight: 700; font-size: 13px; color: oklch(35% 0.16 27); }
+.sb-errors-icon { font-size: 15px; line-height: 1; color: var(--c-danger); flex-shrink: 0; }
+.sb-errors-title { font-weight: 700; font-size: 13px; color: var(--c-danger-ink); }
 .sb-errors-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
 .sb-errors-item {
   display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
   padding: 5px 8px; border-radius: 6px;
-  border: 1px solid oklch(90% 0.06 27);
-  background: oklch(100% 0 0);
+  border: 1px solid var(--c-danger-line);
+  background: var(--c-surface);
 }
 .sb-errors-item.clickable { cursor: pointer; transition: background 120ms; }
-.sb-errors-item.clickable:hover { background: oklch(96% 0.04 27); }
+.sb-errors-item.clickable:hover { background: var(--c-danger-bg); }
 .sb-errors-location { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
 .sb-errors-badge {
   display: inline-flex; align-items: center;
   padding: 1px 6px; border-radius: 4px;
   font-size: 11px; font-weight: 600;
-  background: oklch(88% 0.07 27); color: oklch(35% 0.16 27);
+  background: var(--c-danger-line); color: var(--c-danger-ink);
 }
-.sb-errors-badge.element { background: oklch(84% 0.09 27); color: oklch(30% 0.18 27); }
+.sb-errors-badge.element { background: var(--c-danger-line); color: var(--c-danger-ink); }
 .sb-errors-element-name {
-  font-weight: 500; color: oklch(28% 0.12 27);
+  font-weight: 500; color: var(--c-danger-ink);
   max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .sb-errors-field {
-  font-size: 11px; color: oklch(50% 0.12 27);
-  padding: 1px 5px; background: oklch(94% 0.04 27); border-radius: 3px;
+  font-size: 11px; color: var(--c-danger-ink);
+  padding: 1px 5px; background: var(--c-danger-bg); border-radius: 3px;
 }
-.sb-errors-messages { font-size: 12px; color: oklch(42% 0.14 27); flex: 1; }
+.sb-errors-messages { font-size: 12px; color: var(--c-danger-ink); flex: 1; }
 
 /* ── Loading ── */
 .sb-loading {

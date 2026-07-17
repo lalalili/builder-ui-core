@@ -1,0 +1,130 @@
+/* ── Design tokens (light, default) ── */
+.sb-root,
+.sb-theme {
+  --c-bg: oklch(98.4% 0.004 95);
+  --c-surface: oklch(100% 0 0);
+  --c-s2: oklch(97% 0.004 95);
+  --c-s3: oklch(94.5% 0.005 95);
+  --c-line: oklch(91% 0.005 95);
+  --c-line2: oklch(87% 0.006 95);
+  --c-ink: oklch(22% 0.008 80);
+  --c-ink2: oklch(40% 0.008 80);
+  --c-ink3: oklch(58% 0.008 80);
+  --c-ink4: oklch(72% 0.006 80);
+  --c-ink-h: oklch(15% 0.008 80);
+
+  --c-accent: oklch(54% 0.16 268);
+  --c-accent-h: oklch(48% 0.17 268);
+  --c-accent2: oklch(95% 0.04 268);
+  --c-accent3: oklch(89% 0.07 268);
+
+  --c-warn: oklch(70% 0.13 70);
+  --c-warn-bg: oklch(98% 0.025 70);
+  --c-warn-line: oklch(88% 0.06 70);
+  --c-danger: oklch(58% 0.18 27);
+  --c-danger-bg: oklch(96% 0.03 27);
+  --c-danger-line: oklch(88% 0.06 27);
+  --c-danger-ink: oklch(40% 0.15 27);
+
+  --c-tooltip-bg: #303033;
+  --c-tooltip-line: rgb(255 255 255 / 0.08);
+  --c-scroll-thumb: oklch(82% 0.006 95);
+
+  /* Categorical badge colors (question type / library icons) */
+  --c-cat-choice-bg: oklch(95% 0.04 158);
+  --c-cat-choice-line: oklch(88% 0.06 158);
+  --c-cat-choice-ink: oklch(40% 0.12 158);
+  --c-cat-info-bg: oklch(96% 0.02 250);
+  --c-cat-info-line: oklch(90% 0.04 250);
+  --c-cat-info-ink: oklch(45% 0.12 250);
+  --c-cat-scale-bg: oklch(96% 0.03 70);
+  --c-cat-scale-line: oklch(90% 0.05 70);
+  --c-cat-scale-ink: oklch(48% 0.13 70);
+  --c-cat-matrix-bg: oklch(96% 0.03 300);
+  --c-cat-matrix-line: oklch(90% 0.05 300);
+  --c-cat-matrix-ink: oklch(48% 0.12 300);
+  --c-cat-upload-bg: oklch(96% 0.03 205);
+  --c-cat-upload-line: oklch(90% 0.05 205);
+  --c-cat-upload-ink: oklch(45% 0.12 205);
+  --c-nps-yellow-bg: oklch(96% 0.05 80);
+  --c-nps-yellow-line: oklch(88% 0.08 80);
+  --c-nps-yellow-ink: oklch(48% 0.14 80);
+  --c-nps-green-bg: oklch(95% 0.05 145);
+  --c-nps-green-line: oklch(86% 0.09 145);
+  --c-nps-green-ink: oklch(44% 0.14 145);
+
+  --r1: 6px;
+  --r2: 10px;
+  --r3: 14px;
+  --shadow1: 0 1px 2px oklch(0% 0 0 / 0.05);
+  --shadow2: 0 4px 14px oklch(0% 0 0 / 0.06);
+  --shadow-modal: 0 24px 64px oklch(0% 0 0 / 0.18);
+
+  --font: "Helvetica Neue", Helvetica, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  color-scheme: light;
+}
+
+/* ── Design tokens (dark) ──
+   Opt-in via .sb-auto-dark so consumers of BuilderShell that haven't
+   reviewed their own hardcoded colors (e.g. email template builder)
+   are unaffected. */
+.dark :is(.sb-root, .sb-theme).sb-auto-dark {
+  --c-bg: oklch(16.5% 0.006 260);
+  --c-surface: oklch(21% 0.006 260);
+  --c-s2: oklch(25.5% 0.007 260);
+  --c-s3: oklch(30% 0.008 260);
+  --c-line: oklch(29% 0.01 260);
+  --c-line2: oklch(35% 0.012 260);
+  --c-ink: oklch(92% 0.005 260);
+  --c-ink2: oklch(78% 0.008 260);
+  --c-ink3: oklch(64% 0.01 260);
+  --c-ink4: oklch(49% 0.01 260);
+  --c-ink-h: oklch(98% 0 0);
+
+  --c-accent: oklch(70% 0.14 268);
+  --c-accent-h: oklch(75% 0.13 268);
+  --c-accent2: oklch(30% 0.06 268);
+  --c-accent3: oklch(38% 0.09 268);
+
+  --c-warn: oklch(78% 0.13 75);
+  --c-warn-bg: oklch(28% 0.05 75);
+  --c-warn-line: oklch(44% 0.09 75);
+  --c-danger: oklch(68% 0.17 25);
+  --c-danger-bg: oklch(28% 0.06 25);
+  --c-danger-line: oklch(42% 0.1 25);
+  --c-danger-ink: oklch(82% 0.09 25);
+
+  --c-tooltip-bg: oklch(31% 0.012 260);
+  --c-tooltip-line: rgb(255 255 255 / 0.12);
+  --c-scroll-thumb: oklch(41% 0.012 260);
+
+  --c-cat-choice-bg: oklch(30% 0.048 158);
+  --c-cat-choice-line: oklch(40% 0.06 158);
+  --c-cat-choice-ink: oklch(80% 0.096 158);
+  --c-cat-info-bg: oklch(30% 0.024 250);
+  --c-cat-info-line: oklch(40% 0.04 250);
+  --c-cat-info-ink: oklch(80% 0.096 250);
+  --c-cat-scale-bg: oklch(30% 0.036 70);
+  --c-cat-scale-line: oklch(40% 0.05 70);
+  --c-cat-scale-ink: oklch(80% 0.104 70);
+  --c-cat-matrix-bg: oklch(30% 0.036 300);
+  --c-cat-matrix-line: oklch(40% 0.05 300);
+  --c-cat-matrix-ink: oklch(80% 0.096 300);
+  --c-cat-upload-bg: oklch(30% 0.036 205);
+  --c-cat-upload-line: oklch(40% 0.05 205);
+  --c-cat-upload-ink: oklch(80% 0.096 205);
+  --c-nps-yellow-bg: oklch(30% 0.06 80);
+  --c-nps-yellow-line: oklch(40% 0.08 80);
+  --c-nps-yellow-ink: oklch(80% 0.112 80);
+  --c-nps-green-bg: oklch(30% 0.06 145);
+  --c-nps-green-line: oklch(40% 0.09 145);
+  --c-nps-green-ink: oklch(80% 0.112 145);
+
+  --shadow1: 0 1px 2px oklch(0% 0 0 / 0.35);
+  --shadow2: 0 4px 14px oklch(0% 0 0 / 0.5);
+  --shadow-modal: 0 24px 64px oklch(0% 0 0 / 0.55);
+
+  color-scheme: dark;
+}
