@@ -130,10 +130,19 @@ function onFieldChange(key: string) {
 
 function onOperatorChange(op: string) {
   const noVal = op === 'is_null' || op === 'is_not_null';
+  const multiValue = op === 'in' || op === 'not_in';
+  let value = noVal ? undefined : props.leaf.value;
+
+  if (!multiValue && Array.isArray(value)) {
+    value = value.map(String).join(',');
+  } else if (multiValue && typeof value === 'string') {
+    value = value.split(',').map((item) => item.trim()).filter(Boolean);
+  }
+
   emit('update', {
     ...props.leaf,
     operator: op as Operator,
-    value: noVal ? undefined : props.leaf.value,
+    value,
   });
 }
 
@@ -157,12 +166,20 @@ function onMultiValueChange(e: Event) {
 const valuePlaceholder = computed(() => {
   const op = props.leaf.operator;
   const type = fieldDef.value?.type;
-  if (op === 'contains') return '輸入關鍵字';
-  if (op === 'starts_with') return '開頭文字，例如：台北';
-  if (op === 'ends_with') return '結尾文字，例如：路';
-  if (type === 'number') return '輸入數值';
-  if (type === 'date') return 'YYYY-MM-DD';
-  return '輸入值';
+  if (op === 'in') return '符合任一值，請用逗號分隔，例如：台北市,新北市';
+  if (op === 'not_in') return '排除任一值，請用逗號分隔，例如：台北市,新北市';
+  if (op === 'contains') return '包含此文字，例如：北';
+  if (op === 'starts_with') return '以此文字開頭，例如：台';
+  if (op === 'ends_with') return '以此文字結尾，例如：市';
+  if (type === 'number') {
+    if (op === '=') return '數值須完全相等，例如：100';
+    if (op === '!=') return '排除此數值，例如：100';
+    return '輸入比較數值，例如：100';
+  }
+  if (type === 'date') return '選擇要比對的日期';
+  if (op === '=') return '整串文字須完全相同，例如：台北市';
+  if (op === '!=') return '排除整串完全相同的文字，例如：台北市';
+  return '輸入要比對的內容';
 });
 
 function tagInputDisplay(): string {
@@ -223,8 +240,8 @@ function onTagInputChange(e: Event) {
         type="text"
         :value="tagInputDisplay()"
         @change="onTagInputChange"
-        placeholder="D31, D21（逗號分隔）"
-        title="多個值請用逗號分隔，例如：D31, D21"
+        :placeholder="valuePlaceholder"
+        :title="valuePlaceholder"
       />
 
       <!-- Enum single select -->

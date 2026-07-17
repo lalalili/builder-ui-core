@@ -105,6 +105,47 @@ describe('RuleTreeBuilder', () => {
     expect(updated.enabled).toBe(false);
   });
 
+  it('converts multi-value arrays to comma-separated text when switching to equals', async () => {
+    const tree: RuleGroup = {
+      op: 'AND',
+      children: [{ field: 'email', operator: 'in', value: ['one@example.com', 'two@example.com'] }],
+    };
+    const wrapper = mount(RuleTreeBuilder, {
+      props: { modelValue: tree, availableFields: fields },
+    });
+
+    await wrapper.find('.rtb-op-select').setValue('=');
+
+    const emitted = wrapper.emitted('change') as Array<[RuleGroup]>;
+    const updated = emitted[0][0].children[0] as RuleLeaf;
+    expect(updated.operator).toBe('=');
+    expect(updated.value).toBe('one@example.com,two@example.com');
+  });
+
+  it('explains exact text matching in the equals placeholder', () => {
+    const wrapper = mount(RuleTreeBuilder, {
+      props: {
+        modelValue: { op: 'AND', children: [{ field: 'email', operator: '=', value: '' }] },
+        availableFields: fields,
+      },
+    });
+
+    expect(wrapper.find('.rtb-value-input').attributes('placeholder'))
+      .toBe('整串文字須完全相同，例如：台北市');
+  });
+
+  it('explains comma-separated matching in the in placeholder', () => {
+    const wrapper = mount(RuleTreeBuilder, {
+      props: {
+        modelValue: { op: 'AND', children: [{ field: 'email', operator: 'in', value: [] }] },
+        availableFields: fields,
+      },
+    });
+
+    expect(wrapper.find('.rtb-value-input').attributes('placeholder'))
+      .toBe('符合任一值，請用逗號分隔，例如：台北市,新北市');
+  });
+
   it('no value input shown for is_null operator', async () => {
     const tree: RuleGroup = {
       op: 'AND',
