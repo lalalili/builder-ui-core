@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { provide, reactive, ref, watch } from 'vue';
-import type { FieldDef, RuleGroup, RuleNode } from './rule-tree/types';
+import type { FieldDef, RuleGroup, RuleNode, RulePreviewResponse } from './rule-tree/types';
 import { isGroup } from './rule-tree/types';
 import { getNodeAtPath, insertAtPath, isAncestorPath, removeAtPath } from './rule-tree/ruleTreeUtils';
 import RuleTreeGroup from './rule-tree/RuleTreeGroup.vue';
@@ -8,11 +8,14 @@ import RuleTreeGroup from './rule-tree/RuleTreeGroup.vue';
 const props = defineProps<{
   modelValue?: RuleNode | null;
   availableFields: FieldDef[];
+  previewEnabled?: boolean;
+  previewResponse?: RulePreviewResponse | null;
 }>();
 
 const emit = defineEmits<{
   'update:modelValue': [node: RuleNode];
   change: [node: RuleNode];
+  preview: [detail: { path: number[] }];
 }>();
 
 function makeRoot(): RuleGroup {
@@ -89,7 +92,11 @@ provide('rtbMoveNode', (targetGroupPath: number[], insertIndex: number) => {
       :depth="0"
       :can-remove="false"
       :group-path="[]"
+      :ancestor-disabled="false"
+      :preview-enabled="previewEnabled"
+      :preview-response="previewResponse"
       @update="onUpdate"
+      @preview="emit('preview', $event)"
     />
   </div>
 </template>

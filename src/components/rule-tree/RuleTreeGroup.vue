@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { inject, reactive, ref } from 'vue';
-import type { FieldDef, RuleGroup, RuleLeaf, RuleNode } from './types';
+import { computed, inject, reactive, ref } from 'vue';
+import type { FieldDef, RuleGroup, RuleLeaf, RuleNode, RulePreviewResponse } from './types';
 import { isGroup } from './types';
 import RuleTreeLeaf from './RuleTreeLeaf.vue';
 
@@ -10,11 +10,15 @@ const props = defineProps<{
   depth: number;
   canRemove?: boolean;
   groupPath: number[];
+  ancestorDisabled: boolean;
+  previewEnabled?: boolean;
+  previewResponse?: RulePreviewResponse | null;
 }>();
 
 const emit = defineEmits<{
   update: [group: RuleGroup];
   remove: [];
+  preview: [detail: { path: number[] }];
 }>();
 
 // ── Drag-and-drop inject ─────────────────────────────────────────────────────
@@ -59,6 +63,23 @@ function toggleOp() {
   emit('update', { ...props.group, op: props.group.op === 'AND' ? 'OR' : 'AND' });
 }
 
+function toggleEnabled() {
+  emit('update', { ...props.group, enabled: props.group.enabled === false });
+}
+
+const isDisabled = computed(() => props.group.enabled === false);
+const isEffectivelyDisabled = computed(() => props.ancestorDisabled || isDisabled.value);
+const isPreviewBusy = computed(() => props.previewResponse?.loading === true);
+const previewForThisNode = computed(() => {
+  const response = props.previewResponse;
+  if (!response || response.path.length !== props.groupPath.length) return null;
+  return response.path.every((value, index) => props.groupPath[index] === value) ? response : null;
+});
+
+function previewNode() {
+  emit('preview', { path: props.groupPath });
+}
+
 function updateChild(index: number, node: RuleNode) {
   const children = [...props.group.children];
   children[index] = node;
@@ -93,7 +114,7 @@ function isDraggingThis(): boolean {
 </script>
 
 <template>
-  <div class="rtb-group" :class="[`rtb-depth-${depth}`, { 'is-dragging': isDraggingThis() }]">
+  <div class="rtb-group" :class="[`rtb-depth-${depth}`, { 'is-dragging': isDraggingThis(), 'is-disabled': isEffectivelyDisabled }]">
     <!-- Group header -->
     <div class="rtb-group-header">
       <span
@@ -115,6 +136,25 @@ function isDraggingThis(): boolean {
 
       <span class="rtb-group-label">條件群組</span>
       <span class="rtb-op-hint">（{{ group.op === 'OR' ? '群組內任一條件成立' : '群組內所有條件都成立' }}）</span>
+
+      <span v-if="ancestorDisabled" class="rtb-disabled-hint">受上層停用影響</span>
+
+      <button
+        v-if="canRemove"
+        class="rtb-enable-btn"
+        :class="{ 'is-off': isDisabled }"
+        type="button"
+        :aria-pressed="!isDisabled"
+        @click="toggleEnabled"
+      >{{ isDisabled ? '已停用' : '啟用中' }}</button>
+
+      <button
+        v-if="previewEnabled"
+        class="rtb-preview-btn"
+        type="button"
+        :disabled="isPreviewBusy"
+        @click="previewNode"
+      >{{ previewForThisNode?.loading ? '計算中…' : (canRemove ? '計算筆數' : '計算總筆數') }}</button>
 
       <div class="rtb-group-actions">
         <button
@@ -154,8 +194,12 @@ function isDraggingThis(): boolean {
           :depth="depth + 1"
           :can-remove="true"
           :group-path="[...groupPath, i]"
+          :ancestor-disabled="isEffectivelyDisabled"
+          :preview-enabled="previewEnabled"
+          :preview-response="previewResponse"
           @update="updateChild(i, $event)"
           @remove="removeChild(i)"
+          @preview="emit('preview', $event)"
         />
         <RuleTreeLeaf
           v-else
@@ -163,8 +207,12 @@ function isDraggingThis(): boolean {
           :fields="fields"
           :depth="depth"
           :leaf-path="[...groupPath, i]"
+          :ancestor-disabled="isEffectivelyDisabled"
+          :preview-enabled="previewEnabled"
+          :preview-response="previewResponse"
           @update="updateChild(i, $event)"
           @remove="removeChild(i)"
+          @preview="emit('preview', $event)"
         />
 
         <!-- Drop zone after each child -->
@@ -189,5 +237,10 @@ function isDraggingThis(): boolean {
     >
       <span>無條件（點擊「+ 規則」新增）</span>
     </div>
+
+    <div v-if="previewForThisNode?.result" class="rtb-preview-result">
+      <strong>{{ canRemove ? '僅套用此規則' : '全部啟用規則' }}：符合 {{ previewForThisNode.result.count.toLocaleString() }} 筆</strong>
+    </div>
+    <div v-else-if="previewForThisNode?.error" class="rtb-preview-error">{{ previewForThisNode.error }}</div>
   </div>
 </template>

@@ -91,7 +91,7 @@ describe('RuleTreeBuilder', () => {
   it('updates operator based on field type change', async () => {
     const tree: RuleGroup = {
       op: 'AND',
-      children: [{ field: 'has_app', operator: '=', value: true }],
+      children: [{ field: 'has_app', operator: '=', value: true, enabled: false }],
     };
     const wrapper = mount(RuleTreeBuilder, {
       props: { modelValue: tree, availableFields: fields },
@@ -102,6 +102,7 @@ describe('RuleTreeBuilder', () => {
     const updated = emitted[0][0].children[0] as RuleLeaf;
     expect(updated.field).toBe('status');
     expect(updated.operator).toBe('in');
+    expect(updated.enabled).toBe(false);
   });
 
   it('no value input shown for is_null operator', async () => {
@@ -152,5 +153,109 @@ describe('RuleTreeBuilder', () => {
     const mvEvents = wrapper.emitted('update:modelValue') as Array<[RuleGroup]>;
     expect(mvEvents).toBeTruthy();
     expect(mvEvents[0][0].op).toBe('OR');
+  });
+
+  it('persists a disabled leaf without clearing its condition', async () => {
+    const tree: RuleGroup = {
+      op: 'AND',
+      children: [{ field: 'email', operator: 'contains', value: '@example.com' }],
+    };
+    const wrapper = mount(RuleTreeBuilder, {
+      props: { modelValue: tree, availableFields: fields },
+    });
+
+    await wrapper.find('.rtb-leaf .rtb-enable-btn').trigger('click');
+
+    const emitted = wrapper.emitted('change') as Array<[RuleGroup]>;
+    expect(emitted[0][0].children[0]).toEqual({
+      field: 'email',
+      operator: 'contains',
+      value: '@example.com',
+      enabled: false,
+    });
+  });
+
+  it('emits the selected node path when preview is requested', async () => {
+    const tree: RuleGroup = {
+      op: 'AND',
+      children: [{ field: 'email', operator: 'contains', value: '@example.com' }],
+    };
+    const wrapper = mount(RuleTreeBuilder, {
+      props: { modelValue: tree, availableFields: fields, previewEnabled: true },
+    });
+
+    await wrapper.find('.rtb-leaf .rtb-preview-btn').trigger('click');
+
+    expect(wrapper.emitted('preview')).toEqual([[{ path: [0] }]]);
+  });
+
+  it('calculates all enabled rules from the root group', async () => {
+    const tree: RuleGroup = {
+      op: 'AND',
+      children: [{ field: 'email', operator: 'contains', value: '@example.com' }],
+    };
+    const wrapper = mount(RuleTreeBuilder, {
+      props: { modelValue: tree, availableFields: fields, previewEnabled: true },
+    });
+
+    const rootButton = wrapper.find('.rtb-group-header .rtb-preview-btn');
+    expect(rootButton.text()).toBe('計算總筆數');
+
+    await rootButton.trigger('click');
+
+    expect(wrapper.emitted('preview')).toEqual([[{ path: [] }]]);
+  });
+
+  it('shows the total count result on the root group', () => {
+    const wrapper = mount(RuleTreeBuilder, {
+      props: {
+        modelValue: { op: 'AND', children: [] },
+        availableFields: fields,
+        previewEnabled: true,
+        previewResponse: { path: [], result: { count: 4453 } },
+      },
+    });
+
+    expect(wrapper.find('.rtb-group > .rtb-preview-result').text())
+      .toBe('全部啟用規則：符合 4,453 筆');
+  });
+
+  it('shows the standalone count for a node', () => {
+    const tree: RuleGroup = {
+      op: 'AND',
+      children: [{ field: 'email', operator: 'contains', value: '@example.com' }],
+    };
+    const wrapper = mount(RuleTreeBuilder, {
+      props: {
+        modelValue: tree,
+        availableFields: fields,
+        previewEnabled: true,
+        previewResponse: {
+          path: [0],
+          result: {
+            count: 1540,
+          },
+        },
+      },
+    });
+
+    expect(wrapper.find('.rtb-preview-result').text()).toBe('僅套用此規則：符合 1,540 筆');
+  });
+
+  it('allows standalone child counts while an ancestor group is disabled', () => {
+    const tree: RuleGroup = {
+      op: 'AND',
+      children: [{
+        op: 'AND',
+        enabled: false,
+        children: [{ field: 'email', operator: 'contains', value: '@example.com' }],
+      }],
+    };
+    const wrapper = mount(RuleTreeBuilder, {
+      props: { modelValue: tree, availableFields: fields, previewEnabled: true },
+    });
+
+    expect(wrapper.find('.rtb-leaf .rtb-preview-btn').attributes('disabled')).toBeUndefined();
+    expect(wrapper.find('.rtb-leaf .rtb-disabled-hint').text()).toBe('受上層停用影響');
   });
 });

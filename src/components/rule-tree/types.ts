@@ -41,14 +41,27 @@ export interface RuleLeaf {
   field: string
   operator: Operator
   value?: unknown
+  enabled?: boolean
 }
 
 export interface RuleGroup {
   op: 'AND' | 'OR'
   children: Array<RuleLeaf | RuleGroup>
+  enabled?: boolean
 }
 
 export type RuleNode = RuleLeaf | RuleGroup
+
+export interface RulePreviewResult {
+  count: number
+}
+
+export interface RulePreviewResponse {
+  path: number[]
+  loading?: boolean
+  result?: RulePreviewResult
+  error?: string
+}
 
 export function isGroup(node: RuleNode): node is RuleGroup {
   return 'op' in node

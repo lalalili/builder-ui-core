@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue';
-import type { FieldDef, RuleLeaf, Operator, RelativeDateValue } from './types';
+import type { FieldDef, RuleLeaf, Operator, RelativeDateValue, RulePreviewResponse } from './types';
 import { OPERATORS_BY_TYPE, isRelativeDateValue } from './types';
 
 const props = defineProps<{
@@ -8,11 +8,15 @@ const props = defineProps<{
   fields: FieldDef[];
   depth: number;
   leafPath: number[];
+  ancestorDisabled: boolean;
+  previewEnabled?: boolean;
+  previewResponse?: RulePreviewResponse | null;
 }>();
 
 const emit = defineEmits<{
   update: [leaf: RuleLeaf];
   remove: [];
+  preview: [detail: { path: number[] }];
 }>();
 
 // ── Drag-and-drop inject ─────────────────────────────────────────────────────
@@ -40,6 +44,23 @@ const isDragging = computed(() => {
     p.every((v, i) => props.leafPath[i] === v)
   );
 });
+
+const isDisabled = computed(() => props.leaf.enabled === false);
+const isEffectivelyDisabled = computed(() => props.ancestorDisabled || isDisabled.value);
+const isPreviewBusy = computed(() => props.previewResponse?.loading === true);
+const previewForThisNode = computed(() => {
+  const response = props.previewResponse;
+  if (!response || response.path.length !== props.leafPath.length) return null;
+  return response.path.every((value, index) => props.leafPath[index] === value) ? response : null;
+});
+
+function toggleEnabled() {
+  emit('update', { ...props.leaf, enabled: props.leaf.enabled === false });
+}
+
+function previewNode() {
+  emit('preview', { path: props.leafPath });
+}
 
 // ── Field / operator / value ─────────────────────────────────────────────────
 const fieldDef = computed(() => props.fields.find((f) => f.key === props.leaf.field) ?? null);
@@ -99,7 +120,12 @@ function onFieldChange(key: string) {
   const newField = props.fields.find((f) => f.key === key);
   const ops = newField ? OPERATORS_BY_TYPE[newField.type] : [];
   const firstOp = ops[0]?.value ?? '=';
-  emit('update', { field: key, operator: firstOp, value: undefined });
+  emit('update', {
+    field: key,
+    operator: firstOp,
+    value: undefined,
+    enabled: props.leaf.enabled,
+  });
 }
 
 function onOperatorChange(op: string) {
@@ -154,7 +180,8 @@ function onTagInputChange(e: Event) {
 </script>
 
 <template>
-  <div class="rtb-leaf" :class="{ 'is-dragging': isDragging }">
+  <div class="rtb-leaf-wrap">
+  <div class="rtb-leaf" :class="{ 'is-dragging': isDragging, 'is-disabled': isEffectivelyDisabled }">
     <span
       class="rtb-drag-handle"
       title="拖曳移動規則"
@@ -265,6 +292,29 @@ function onTagInputChange(e: Event) {
       />
     </template>
 
+    <span v-if="ancestorDisabled" class="rtb-disabled-hint">受上層停用影響</span>
+
+    <button
+      class="rtb-enable-btn"
+      :class="{ 'is-off': isDisabled }"
+      type="button"
+      :aria-pressed="!isDisabled"
+      @click="toggleEnabled"
+    >{{ isDisabled ? '已停用' : '啟用中' }}</button>
+
+    <button
+      v-if="previewEnabled"
+      class="rtb-preview-btn"
+      type="button"
+      :disabled="isPreviewBusy"
+      @click="previewNode"
+    >{{ previewForThisNode?.loading ? '計算中…' : '計算筆數' }}</button>
+
     <button class="rtb-remove-btn" type="button" @click="emit('remove')" title="刪除規則">✕</button>
+  </div>
+  <div v-if="previewForThisNode?.result" class="rtb-preview-result">
+    <strong>僅套用此規則：符合 {{ previewForThisNode.result.count.toLocaleString() }} 筆</strong>
+  </div>
+  <div v-else-if="previewForThisNode?.error" class="rtb-preview-error">{{ previewForThisNode.error }}</div>
   </div>
 </template>
