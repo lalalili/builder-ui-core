@@ -10,6 +10,7 @@ const props = defineProps<{
   availableFields: FieldDef[];
   previewEnabled?: boolean;
   previewResponse?: RulePreviewResponse | null;
+  dark?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -85,7 +86,7 @@ provide('rtbMoveNode', (targetGroupPath: number[], insertIndex: number) => {
 </script>
 
 <template>
-  <div class="rtb-root">
+  <div class="rtb-root" :class="{ 'rtb-dark': dark }">
     <RuleTreeGroup
       :group="tree"
       :fields="availableFields"

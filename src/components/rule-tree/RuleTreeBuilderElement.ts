@@ -2,6 +2,7 @@ import { defineCustomElement, ref, computed, watch, h } from 'vue';
 import RuleTreeBuilderVue from '../RuleTreeBuilder.vue';
 import type { FieldDef, RuleNode, RuleGroup, RulePreviewResponse } from './types';
 import { isGroup } from './types';
+import { useHtmlDarkClass } from '../../composables/useHtmlDarkClass';
 import ruleTreeStyles from './rule-tree-builder.css?inline';
 
 const RuleTreeBuilderElement = defineCustomElement({
@@ -25,6 +26,8 @@ const RuleTreeBuilderElement = defineCustomElement({
       };
     },
   ) {
+    const isDark = useHtmlDarkClass();
+
     const fields = computed<FieldDef[]>(() => {
       try { return JSON.parse(props.availableFields) ?? []; } catch (error) {
         console.error('[rule-tree-builder] availableFields JSON 解析失敗，改用空欄位清單', error);
@@ -72,6 +75,7 @@ const RuleTreeBuilderElement = defineCustomElement({
         availableFields: fields.value,
         previewEnabled: props.previewEnabled,
         previewResponse: previewResponse.value,
+        dark: isDark.value,
         'onUpdate:modelValue': onChange,
         onChange,
         onPreview: (detail: { path: number[] }) => emit('preview', detail),

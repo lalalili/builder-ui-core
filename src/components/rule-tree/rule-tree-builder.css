@@ -1,46 +1,139 @@
 .rtb-root {
   font-family: "Helvetica Neue", Helvetica, "Noto Sans TC", "PingFang TC", sans-serif;
   font-size: 13px;
-  color: oklch(22% 0.008 80);
+  color: var(--c-ink);
+  color-scheme: light;
+
+  --c-ink: oklch(22% 0.008 80);
+  --c-ink2: oklch(40% 0.008 80);
+  --c-ink3: oklch(55% 0.006 80);
+  --c-ink4: oklch(75% 0.005 80);
+
   --c-line: oklch(91% 0.005 95);
+  --c-line2: oklch(88% 0.005 80);
+  --c-surface: white;
+  --c-field: white;
+  --c-header: oklch(97.5% 0.003 95);
+  --c-body: oklch(98% 0.003 95);
+
+  --c-depth-0: oklch(85% 0.008 80);
+  --c-depth-1: oklch(88% 0.008 80);
+  --c-depth-2: oklch(91% 0.005 95);
+
+  --c-disabled-bg: oklch(96% 0.003 80);
+  --c-disabled-line: oklch(87% 0.005 80);
+
   --c-s2: oklch(97% 0.004 95);
   --c-accent: oklch(54% 0.16 268);
   --c-accent2: oklch(95% 0.04 268);
-  --c-danger: oklch(58% 0.18 27);
   --c-and: oklch(54% 0.16 268);
   --c-or: oklch(60% 0.16 150);
+  --c-or-bg: oklch(94% 0.05 150);
+
+  --c-danger: oklch(58% 0.18 27);
+  --c-danger-ink: oklch(58% 0.18 27);
+  --c-danger-hover-bg: oklch(94% 0.05 27);
+
+  --c-green-line: oklch(84% 0.01 150);
+  --c-green-bg: oklch(96% 0.03 150);
+  --c-green-ink: oklch(42% 0.1 150);
+  --c-off-line: oklch(82% 0.008 80);
+  --c-off-bg: oklch(94% 0.004 80);
+  --c-off-ink: oklch(52% 0.008 80);
+
+  --c-preview-line: oklch(84% 0.03 268);
+
+  --c-info-line: oklch(88% 0.025 268);
+  --c-info-bg: oklch(97% 0.015 268);
+  --c-info-ink: oklch(38% 0.04 268);
+  --c-positive: oklch(48% 0.12 150);
+
+  --c-err-line: oklch(88% 0.04 27);
+  --c-err-bg: oklch(97% 0.02 27);
+}
+
+/* ── Dark mode (bridged from <html>.dark via MutationObserver, see useHtmlDarkClass) ── */
+.rtb-root.rtb-dark {
+  color-scheme: dark;
+
+  --c-ink: oklch(92% 0.005 260);
+  --c-ink2: oklch(78% 0.008 260);
+  --c-ink3: oklch(64% 0.01 260);
+  --c-ink4: oklch(49% 0.01 260);
+
+  --c-line: oklch(29% 0.01 260);
+  --c-line2: oklch(35% 0.012 260);
+  --c-surface: oklch(21% 0.006 260);
+  --c-field: oklch(25.5% 0.007 260);
+  --c-header: oklch(25.5% 0.007 260);
+  --c-body: oklch(18.5% 0.006 260);
+
+  --c-depth-0: oklch(37% 0.012 260);
+  --c-depth-1: oklch(33% 0.011 260);
+  --c-depth-2: oklch(29% 0.01 260);
+
+  --c-disabled-bg: oklch(23% 0.005 260);
+  --c-disabled-line: oklch(26.5% 0.008 260);
+
+  --c-s2: oklch(25.5% 0.007 260);
+  --c-accent: oklch(70% 0.14 268);
+  --c-accent2: oklch(30% 0.06 268);
+  --c-and: oklch(70% 0.14 268);
+  --c-or: oklch(72% 0.14 150);
+  --c-or-bg: oklch(30% 0.055 150);
+
+  --c-danger: oklch(68% 0.17 25);
+  --c-danger-ink: oklch(82% 0.09 25);
+  --c-danger-hover-bg: oklch(30% 0.07 25);
+
+  --c-green-line: oklch(42% 0.08 150);
+  --c-green-bg: oklch(28% 0.05 150);
+  --c-green-ink: oklch(80% 0.11 150);
+  --c-off-line: oklch(36% 0.01 260);
+  --c-off-bg: oklch(24% 0.006 260);
+  --c-off-ink: oklch(66% 0.01 260);
+
+  --c-preview-line: oklch(40% 0.07 268);
+
+  --c-info-line: oklch(38% 0.05 268);
+  --c-info-bg: oklch(26% 0.03 268);
+  --c-info-ink: oklch(84% 0.05 268);
+  --c-positive: oklch(78% 0.13 150);
+
+  --c-err-line: oklch(42% 0.1 25);
+  --c-err-bg: oklch(28% 0.06 25);
 }
 
 /* ── Group ── */
 .rtb-group {
   border: 1px solid var(--c-line);
   border-radius: 8px;
-  background: white;
+  background: var(--c-surface);
   overflow: hidden;
 }
 .rtb-group.is-disabled,
 .rtb-leaf.is-disabled {
-  border-color: oklch(87% 0.005 80);
-  background: oklch(96% 0.003 80);
+  border-color: var(--c-disabled-line);
+  background: var(--c-disabled-bg);
 }
 .rtb-group.is-disabled > .rtb-group-header,
 .rtb-leaf.is-disabled > :not(.rtb-enable-btn):not(.rtb-preview-btn):not(.rtb-remove-btn) {
   opacity: 0.55;
 }
-.rtb-depth-0 { border-color: oklch(85% 0.008 80); }
-.rtb-depth-1 { border-color: oklch(88% 0.008 80); }
-.rtb-depth-2 { border-color: oklch(91% 0.005 95); }
+.rtb-depth-0 { border-color: var(--c-depth-0); }
+.rtb-depth-1 { border-color: var(--c-depth-1); }
+.rtb-depth-2 { border-color: var(--c-depth-2); }
 
 .rtb-group-header {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: oklch(97.5% 0.003 95);
+  background: var(--c-header);
   border-bottom: 1px solid var(--c-line);
 }
-.rtb-group-label { font-size: 12px; color: oklch(55% 0.006 80); }
-.rtb-op-hint { font-size: 11px; color: oklch(60% 0.006 80); flex: 1; }
+.rtb-group-label { font-size: 12px; color: var(--c-ink3); }
+.rtb-op-hint { font-size: 11px; color: var(--c-ink3); flex: 1; }
 
 .rtb-op-toggle {
   padding: 3px 10px;
@@ -58,7 +151,7 @@
   color: var(--c-accent);
 }
 .rtb-op-toggle.is-or {
-  background: oklch(94% 0.05 150);
+  background: var(--c-or-bg);
   border-color: var(--c-or);
   color: var(--c-or);
 }
@@ -69,7 +162,7 @@
   display: flex;
   flex-direction: column;
   padding: 8px;
-  background: oklch(98% 0.003 95);
+  background: var(--c-body);
 }
 
 /* ── Drag-and-drop ── */
@@ -95,7 +188,7 @@
 
 .rtb-drag-handle {
   cursor: grab;
-  color: oklch(75% 0.005 80);
+  color: var(--c-ink4);
   font-size: 14px;
   user-select: none;
   flex-shrink: 0;
@@ -107,7 +200,7 @@
 .rtb-group-empty {
   padding: 12px 16px;
   font-size: 12px;
-  color: oklch(65% 0.005 80);
+  color: var(--c-ink4);
   font-style: italic;
 }
 
@@ -122,7 +215,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 8px;
-  background: white;
+  background: var(--c-surface);
   border: 1px solid var(--c-line);
   border-radius: 6px;
 }
@@ -136,16 +229,17 @@
 /* ── Controls ── */
 .rtb-select, .rtb-input {
   height: 30px;
-  border: 1px solid oklch(88% 0.005 80);
+  border: 1px solid var(--c-line2);
   border-radius: 5px;
   padding: 0 8px;
   font-size: 12.5px;
-  background: white;
-  color: oklch(22% 0.008 80);
+  background: var(--c-field);
+  color: var(--c-ink);
   outline: none;
   transition: border-color 120ms;
 }
 .rtb-select:focus, .rtb-input:focus { border-color: var(--c-accent); }
+.rtb-input::placeholder { color: var(--c-ink4); }
 
 .rtb-field-select { min-width: 110px; }
 .rtb-op-select { min-width: 80px; }
@@ -158,12 +252,12 @@
 
 .rtb-add-btn {
   padding: 3px 10px;
-  border: 1px solid oklch(88% 0.005 80);
+  border: 1px solid var(--c-line2);
   border-radius: 5px;
-  background: white;
+  background: var(--c-field);
   font-size: 12px;
   cursor: pointer;
-  color: oklch(40% 0.008 80);
+  color: var(--c-ink2);
   transition: all 120ms;
 }
 .rtb-add-btn:hover:not(:disabled) {
@@ -180,10 +274,10 @@
 .rtb-preview-btn {
   height: 28px;
   padding: 0 9px;
-  border: 1px solid oklch(84% 0.01 150);
+  border: 1px solid var(--c-green-line);
   border-radius: 5px;
-  background: oklch(96% 0.03 150);
-  color: oklch(42% 0.1 150);
+  background: var(--c-green-bg);
+  color: var(--c-green-ink);
   font-size: 11.5px;
   font-weight: 600;
   white-space: nowrap;
@@ -192,13 +286,13 @@
 }
 
 .rtb-enable-btn.is-off {
-  border-color: oklch(82% 0.008 80);
-  background: oklch(94% 0.004 80);
-  color: oklch(52% 0.008 80);
+  border-color: var(--c-off-line);
+  background: var(--c-off-bg);
+  color: var(--c-off-ink);
 }
 
 .rtb-preview-btn {
-  border-color: oklch(84% 0.03 268);
+  border-color: var(--c-preview-line);
   background: var(--c-accent2);
   color: var(--c-accent);
 }
@@ -210,7 +304,7 @@
 }
 
 .rtb-disabled-hint {
-  color: oklch(55% 0.01 80);
+  color: var(--c-ink3);
   font-size: 10.5px;
   white-space: nowrap;
 }
@@ -221,20 +315,20 @@
   align-items: center;
   gap: 10px;
   padding: 6px 10px;
-  border: 1px solid oklch(88% 0.025 268);
+  border: 1px solid var(--c-info-line);
   border-radius: 5px;
-  background: oklch(97% 0.015 268);
-  color: oklch(38% 0.04 268);
+  background: var(--c-info-bg);
+  color: var(--c-info-ink);
   font-size: 11.5px;
 }
 
-.rtb-preview-result strong.is-positive { color: oklch(48% 0.12 150); }
+.rtb-preview-result strong.is-positive { color: var(--c-positive); }
 .rtb-preview-result strong.is-negative { color: var(--c-danger); }
 
 .rtb-preview-error {
-  border-color: oklch(88% 0.04 27);
-  background: oklch(97% 0.02 27);
-  color: var(--c-danger);
+  border-color: var(--c-err-line);
+  background: var(--c-err-bg);
+  color: var(--c-danger-ink);
 }
 
 .rtb-group > .rtb-preview-result,
@@ -246,7 +340,7 @@
   width: 24px; height: 24px;
   border: none;
   background: none;
-  color: oklch(65% 0.005 80);
+  color: var(--c-ink4);
   cursor: pointer;
   border-radius: 4px;
   font-size: 12px;
@@ -257,7 +351,7 @@
   margin-left: auto;
 }
 .rtb-remove-btn:hover {
-  background: oklch(94% 0.05 27);
+  background: var(--c-danger-hover-bg);
   color: var(--c-danger);
 }
 
@@ -265,12 +359,12 @@
 .rtb-date-mode-btn {
   height: 30px;
   padding: 0 8px;
-  border: 1px solid oklch(88% 0.005 80);
+  border: 1px solid var(--c-line2);
   border-radius: 5px;
-  background: white;
+  background: var(--c-field);
   font-size: 11px;
   cursor: pointer;
-  color: oklch(50% 0.008 80);
+  color: var(--c-ink3);
   white-space: nowrap;
   flex-shrink: 0;
   transition: all 120ms;
