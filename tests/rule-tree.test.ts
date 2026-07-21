@@ -156,6 +156,47 @@ describe('RuleTreeBuilder', () => {
     });
     expect(wrapper.find('.rtb-value-input').exists()).toBe(false);
     expect(wrapper.find('.rtb-value-select').exists()).toBe(false);
+    expect(wrapper.find('.rtb-value-spacer').exists()).toBe(true);
+  });
+
+  it('top-aligns controls when an enum condition uses a multi-select', () => {
+    const wrapper = mount(RuleTreeBuilder, {
+      props: {
+        modelValue: { op: 'AND', children: [{ field: 'status', operator: 'in', value: ['active'] }] },
+        availableFields: fields,
+      },
+    });
+
+    expect(wrapper.find('.rtb-value-select[multiple]').exists()).toBe(true);
+    expect(wrapper.find('.rtb-leaf').classes()).toContain('has-multi-select');
+  });
+
+  it('marks an empty multi-value condition invalid and disables its preview', () => {
+    const wrapper = mount(RuleTreeBuilder, {
+      props: {
+        modelValue: { op: 'AND', children: [{ field: 'status', operator: 'in', value: [] }] },
+        availableFields: fields,
+        previewEnabled: true,
+      },
+    });
+
+    expect(wrapper.find('.rtb-value-select').classes()).toContain('is-invalid');
+    expect(wrapper.find('.rtb-value-select').attributes('aria-invalid')).toBe('true');
+    expect(wrapper.find('.rtb-leaf .rtb-preview-btn').attributes('disabled')).toBeDefined();
+    expect(wrapper.find('.rtb-leaf .rtb-preview-btn').attributes('title')).toBe('請至少選擇一個值');
+  });
+
+  it('treats whitespace-only tag values as an empty multi-value condition', () => {
+    const wrapper = mount(RuleTreeBuilder, {
+      props: {
+        modelValue: { op: 'AND', children: [{ field: 'email', operator: 'in', value: ['   '] }] },
+        availableFields: fields,
+        previewEnabled: true,
+      },
+    });
+
+    expect(wrapper.find('.rtb-tag-input').classes()).toContain('is-invalid');
+    expect(wrapper.find('.rtb-leaf .rtb-preview-btn').attributes('disabled')).toBeDefined();
   });
 
   it('renders date input for date field type', () => {

@@ -115,6 +115,9 @@ const useEnumMultiSelect = computed(
 const useTagInput = computed(
   () => isMultiValue.value && !useEnumMultiSelect.value,
 );
+const hasMissingMultiValue = computed(
+  () => isMultiValue.value && multiValueAsArray().length === 0,
+);
 
 function onFieldChange(key: string) {
   const newField = props.fields.find((f) => f.key === key);
@@ -152,8 +155,8 @@ function onValueChange(val: unknown) {
 
 function multiValueAsArray(): string[] {
   const v = props.leaf.value;
-  if (Array.isArray(v)) return v.map(String);
-  if (typeof v === 'string' && v) return v.split(',').map((s) => s.trim());
+  if (Array.isArray(v)) return v.map(String).map((s) => s.trim()).filter(Boolean);
+  if (typeof v === 'string' && v) return v.split(',').map((s) => s.trim()).filter(Boolean);
   return [];
 }
 
@@ -198,7 +201,14 @@ function onTagInputChange(e: Event) {
 
 <template>
   <div class="rtb-leaf-wrap">
-  <div class="rtb-leaf" :class="{ 'is-dragging': isDragging, 'is-disabled': isEffectivelyDisabled }">
+  <div
+    class="rtb-leaf"
+    :class="{
+      'has-multi-select': useEnumMultiSelect,
+      'is-dragging': isDragging,
+      'is-disabled': isEffectivelyDisabled,
+    }"
+  >
     <span
       class="rtb-drag-handle"
       title="拖曳移動規則"
@@ -224,8 +234,11 @@ function onTagInputChange(e: Event) {
       <select
         v-if="useEnumMultiSelect"
         class="rtb-select rtb-value-select"
+        :class="{ 'is-invalid': hasMissingMultiValue }"
         multiple
         :value="multiValueAsArray()"
+        :aria-invalid="hasMissingMultiValue"
+        :title="hasMissingMultiValue ? '請至少選擇一個值' : undefined"
         @change="onMultiValueChange"
       >
         <option v-for="opt in fieldDef?.options" :key="opt.value" :value="String(opt.value)">
@@ -237,11 +250,13 @@ function onTagInputChange(e: Event) {
       <input
         v-else-if="useTagInput"
         class="rtb-input rtb-value-input rtb-tag-input"
+        :class="{ 'is-invalid': hasMissingMultiValue }"
         type="text"
         :value="tagInputDisplay()"
+        :aria-invalid="hasMissingMultiValue"
         @change="onTagInputChange"
         :placeholder="valuePlaceholder"
-        :title="valuePlaceholder"
+        :title="hasMissingMultiValue ? '請至少輸入一個值' : valuePlaceholder"
       />
 
       <!-- Enum single select -->
@@ -309,6 +324,8 @@ function onTagInputChange(e: Event) {
       />
     </template>
 
+    <span v-else class="rtb-value-spacer" aria-hidden="true"></span>
+
     <span v-if="ancestorDisabled" class="rtb-disabled-hint">受上層停用影響</span>
 
     <button
@@ -323,7 +340,8 @@ function onTagInputChange(e: Event) {
       v-if="previewEnabled"
       class="rtb-preview-btn"
       type="button"
-      :disabled="isPreviewBusy"
+      :title="hasMissingMultiValue ? '請至少選擇一個值' : undefined"
+      :disabled="isPreviewBusy || hasMissingMultiValue"
       @click="previewNode"
     >{{ previewForThisNode?.loading ? '計算中…' : '計算筆數' }}</button>
 
