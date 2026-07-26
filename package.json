@@ -1,7 +1,7 @@
 {
   "name": "@lalalili/builder-ui-core",
   "version": "1.0.0",
-  "description": "Shared Vue builder shell skeleton \u2014 used by survey-filament and email-campaign-filament",
+  "description": "Shared Vue builder shell skeleton — used by survey-filament and email-campaign-filament",
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
@@ -18,5 +18,6 @@
     "vite": "^8.0.16",
     "vitest": "^4.1.9",
     "vue": "^3.5.38"
-  }
+  },
+  "packageManager": "pnpm@11.7.0"
 }
