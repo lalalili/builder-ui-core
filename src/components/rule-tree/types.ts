@@ -96,8 +96,8 @@ export const OPERATORS_BY_TYPE: Record<FieldType, Array<{ value: Operator; label
     { value: 'is_not_null', label: '不為空' },
   ],
   enum: [
-    { value: 'in', label: '包含於' },
-    { value: 'not_in', label: '不包含於' },
+    { value: 'in', label: '包含於（IN）' },
+    { value: 'not_in', label: '不包含於（NOT IN）' },
     { value: '=', label: '等於' },
     { value: '!=', label: '不等於' },
   ],

@@ -51,3 +51,39 @@ export function isAncestorPath(ancestor: number[], descendant: number[]): boolea
   if (ancestor.length >= descendant.length) return false
   return ancestor.every((v, i) => descendant[i] === v)
 }
+
+export interface MoveNodeWithinParentResult {
+  tree: RuleGroup
+  path: number[]
+  position: number
+  total: number
+}
+
+export function moveNodeWithinParent(
+  root: RuleGroup,
+  sourcePath: number[],
+  direction: -1 | 1,
+): MoveNodeWithinParentResult | null {
+  if (sourcePath.length === 0) return null
+
+  const sourceIndex = sourcePath[sourcePath.length - 1]
+  if (sourceIndex === undefined) return null
+  const parentPath = sourcePath.slice(0, -1)
+  const parent = getNodeAtPath(root, parentPath)
+
+  if (!parent || !isGroup(parent)) return null
+
+  const targetIndex = sourceIndex + direction
+  if (targetIndex < 0 || targetIndex >= parent.children.length) return null
+
+  const node = parent.children[sourceIndex]
+  let tree = removeAtPath(root, sourcePath)
+  tree = insertAtPath(tree, parentPath, targetIndex, node)
+
+  return {
+    tree,
+    path: [...parentPath, targetIndex],
+    position: targetIndex + 1,
+    total: parent.children.length,
+  }
+}

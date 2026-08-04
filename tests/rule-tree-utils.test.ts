@@ -3,6 +3,7 @@ import {
   getNodeAtPath,
   insertAtPath,
   isAncestorPath,
+  moveNodeWithinParent,
   removeAtPath,
 } from '../src/components/rule-tree/ruleTreeUtils'
 import type { RuleGroup, RuleLeaf } from '../src/components/rule-tree/types'
@@ -76,5 +77,27 @@ describe('isAncestorPath', () => {
     expect(isAncestorPath([1, 0], [1, 0])).toBe(false) // same path is not an ancestor
     expect(isAncestorPath([1, 0], [1])).toBe(false)
     expect(isAncestorPath([0], [1, 0])).toBe(false)
+  })
+})
+
+describe('moveNodeWithinParent', () => {
+  it('moves a node up or down without mutating the original tree', () => {
+    const root = tree()
+
+    const movedDown = moveNodeWithinParent(root, [0], 1)
+    expect(movedDown?.path).toEqual([1])
+    expect((movedDown?.tree.children[1] as RuleLeaf).field).toBe('a')
+    expect(root.children[0]).toEqual(leaf('a'))
+
+    const movedUp = moveNodeWithinParent(root, [1, 1], -1)
+    expect(movedUp?.path).toEqual([1, 0])
+    expect((movedUp?.tree.children[1] as RuleGroup).children).toEqual([leaf('c'), leaf('b')])
+  })
+
+  it('returns null at the first and last sibling boundaries', () => {
+    const root = tree()
+
+    expect(moveNodeWithinParent(root, [0], -1)).toBeNull()
+    expect(moveNodeWithinParent(root, [1, 1], 1)).toBeNull()
   })
 })

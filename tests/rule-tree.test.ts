@@ -11,6 +11,14 @@ const fields: FieldDef[] = [
   { key: 'status', label: '狀態', type: 'enum', options: [{ value: 'active', label: '啟用' }, { value: 'inactive', label: '停用' }] },
   { key: 'purchase_at', label: '購買日期', type: 'date' },
 ];
+const longStatusOptions = Array.from({ length: 11 }, (_, index) => ({
+  value: `status-${index + 1}`,
+  label: `狀態選項 ${index + 1}`,
+}));
+const fieldsWithLongStatus: FieldDef[] = [
+  ...fields,
+  { key: 'long_status', label: '長狀態', type: 'enum', options: longStatusOptions },
+];
 
 const emptyTree: RuleGroup = { op: 'AND', children: [] };
 
@@ -103,6 +111,123 @@ describe('RuleTreeBuilder', () => {
     expect(updated.field).toBe('status');
     expect(updated.operator).toBe('in');
     expect(updated.enabled).toBe(false);
+  });
+
+  it('uses consistent IN and NOT IN labels across field types', () => {
+    const tree: RuleGroup = {
+      op: 'AND',
+      children: [
+        { field: 'email', operator: 'in', value: ['one@example.com'] },
+        { field: 'status', operator: 'not_in', value: ['inactive'] },
+      ],
+    };
+    const wrapper = mount(RuleTreeBuilder, {
+      props: { modelValue: tree, availableFields: fields },
+    });
+
+    expect(wrapper.findAll('.rtb-op-select')[0].find('option[value="in"]').text())
+      .toBe('包含於（IN）');
+    expect(wrapper.findAll('.rtb-op-select')[1].find('option[value="not_in"]').text())
+      .toBe('不包含於（NOT IN）');
+  });
+
+  it('provides descriptive accessible names for condition controls', () => {
+    const wrapper = mount(RuleTreeBuilder, {
+      props: {
+        modelValue: { op: 'AND', children: [{ field: 'status', operator: 'not_in', value: ['active'] }] },
+        availableFields: fields,
+      },
+    });
+
+    expect(wrapper.find('.rtb-field-select').attributes('aria-label')).toBe('條件欄位：狀態');
+    expect(wrapper.find('.rtb-op-select').attributes('aria-label')).toBe('條件運算子：不包含於（NOT IN）');
+    expect(wrapper.find('.rtb-value-select[multiple]').attributes('aria-label')).toBe('條件值：狀態');
+    expect(wrapper.find('.rtb-remove-btn').attributes('aria-label')).toBe('刪除規則');
+  });
+
+  it('uses a searchable checklist for long enum option lists', async () => {
+    const wrapper = mount(RuleTreeBuilder, {
+      props: {
+        modelValue: {
+          op: 'AND',
+          children: [{ field: 'long_status', operator: 'in', value: ['status-2'] }],
+        },
+        availableFields: fieldsWithLongStatus,
+      },
+    });
+
+    expect(wrapper.find('.rtb-multi-select').exists()).toBe(true);
+    expect(wrapper.find('select[multiple]').exists()).toBe(false);
+
+    await wrapper.find('.rtb-multi-select-trigger').trigger('click');
+    await wrapper.find('.rtb-multi-select-search').setValue('選項 10');
+
+    expect(wrapper.findAll('.rtb-multi-select-option')).toHaveLength(1);
+    await wrapper.find('.rtb-multi-select-option input').setValue(true);
+
+    expect(wrapper.find('.rtb-multi-select-panel').exists()).toBe(true);
+    const changes = wrapper.emitted('change') as Array<[RuleGroup]>;
+    const updated = changes[changes.length - 1][0].children[0] as RuleLeaf;
+    expect(updated.value).toEqual(['status-2', 'status-10']);
+  });
+
+  it('reorders a rule with the keyboard and can cancel the move', async () => {
+    const tree: RuleGroup = {
+      op: 'AND',
+      children: [
+        { field: 'has_app', operator: '=', value: true },
+        { field: 'email', operator: 'contains', value: '@' },
+        { field: 'score', operator: '>', value: 10 },
+      ],
+    };
+    const wrapper = mount(RuleTreeBuilder, {
+      props: { modelValue: tree, availableFields: fields },
+    });
+    const handle = wrapper.findAll('.rtb-drag-handle')[0];
+
+    await handle.trigger('keydown', { key: ' ', code: 'Space' });
+    expect(handle.attributes('aria-pressed')).toBe('true');
+
+    await handle.trigger('keydown', { key: 'ArrowDown' });
+    let changes = wrapper.emitted('change') as Array<[RuleGroup]>;
+    let updated = changes[changes.length - 1][0];
+    expect((updated.children[0] as RuleLeaf).field).toBe('email');
+    expect((updated.children[1] as RuleLeaf).field).toBe('has_app');
+
+    await handle.trigger('keydown', { key: ' ', code: 'Space' });
+    expect(handle.attributes('aria-pressed')).toBe('false');
+
+    await handle.trigger('keydown', { key: ' ', code: 'Space' });
+    await handle.trigger('keydown', { key: 'ArrowUp' });
+    await handle.trigger('keydown', { key: 'Escape' });
+    changes = wrapper.emitted('change') as Array<[RuleGroup]>;
+    updated = changes[changes.length - 1][0];
+    expect((updated.children[0] as RuleLeaf).field).toBe('email');
+    expect((updated.children[1] as RuleLeaf).field).toBe('has_app');
+    expect(wrapper.find('.rtb-sr-only').text()).toContain('順序已還原');
+  });
+
+  it('reorders a nested group with the keyboard', async () => {
+    const tree: RuleGroup = {
+      op: 'AND',
+      children: [
+        { op: 'OR', children: [{ field: 'email', operator: 'contains', value: '@' }] },
+        { op: 'AND', children: [{ field: 'has_app', operator: '=', value: true }] },
+      ],
+    };
+    const wrapper = mount(RuleTreeBuilder, {
+      props: { modelValue: tree, availableFields: fields },
+    });
+    const handle = wrapper.findAll('.rtb-drag-handle')[0];
+
+    await handle.trigger('keydown', { key: 'Enter' });
+    await handle.trigger('keydown', { key: 'ArrowDown' });
+    await handle.trigger('keydown', { key: 'Enter' });
+
+    const changes = wrapper.emitted('change') as Array<[RuleGroup]>;
+    const updated = changes[changes.length - 1][0];
+    expect((updated.children[0] as RuleGroup).op).toBe('AND');
+    expect((updated.children[1] as RuleGroup).op).toBe('OR');
   });
 
   it('converts multi-value arrays to comma-separated text when switching to equals', async () => {

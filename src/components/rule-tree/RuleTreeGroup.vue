@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import { computed, inject, reactive, ref } from 'vue';
+import { computed, inject, reactive, ref, toRaw } from 'vue';
 import type { FieldDef, RuleGroup, RuleLeaf, RuleNode, RulePreviewResponse } from './types';
 import { isGroup } from './types';
 import RuleTreeLeaf from './RuleTreeLeaf.vue';
+import {
+  rtbDragStateKey,
+  rtbEndDragKey,
+  rtbMoveNodeKey,
+  rtbNodeKeyKey,
+  rtbStartDragKey,
+} from './ruleTreeContext';
+import { useRuleTreeKeyboardMove } from './useRuleTreeKeyboardMove';
 
 const props = defineProps<{
   group: RuleGroup;
@@ -22,10 +30,24 @@ const emit = defineEmits<{
 }>();
 
 // ── Drag-and-drop inject ─────────────────────────────────────────────────────
-const dragState = inject<{ path: number[] | null }>('rtbDragState', reactive({ path: null }));
-const startDrag = inject<(path: number[]) => void>('rtbStartDrag', () => {});
-const endDrag = inject<() => void>('rtbEndDrag', () => {});
-const moveNode = inject<(groupPath: number[], insertIndex: number) => void>('rtbMoveNode', () => {});
+const dragState = inject(rtbDragStateKey, reactive({ path: null }));
+const startDrag = inject(rtbStartDragKey, () => {});
+const endDrag = inject(rtbEndDragKey, () => {});
+const moveNode = inject(rtbMoveNodeKey, () => {});
+const localNodeKeys = new WeakMap<object, string>();
+let localNodeSequence = 0;
+const getNodeKey = inject(rtbNodeKeyKey, (node: RuleNode): string => {
+  const objectNode = toRaw(node) as object;
+  const existingKey = localNodeKeys.get(objectNode);
+  if (existingKey) return existingKey;
+
+  const key = `local-node-${localNodeSequence++}`;
+  localNodeKeys.set(objectNode, key);
+  return key;
+});
+const { isMoving: isKeyboardMoving, onKeydown: onKeyboardHandleKeydown } = useRuleTreeKeyboardMove(
+  () => props.groupPath,
+);
 
 const activeDropZone = ref<number | null>(null);
 
@@ -111,20 +133,30 @@ function isDraggingThis(): boolean {
     p.every((v, i) => props.groupPath[i] === v)
   );
 }
+
+function isMovingThis(): boolean {
+  return isDraggingThis() || isKeyboardMoving.value;
+}
 </script>
 
 <template>
-  <div class="rtb-group" :class="[`rtb-depth-${depth}`, { 'is-dragging': isDraggingThis(), 'is-disabled': isEffectivelyDisabled }]">
+  <div class="rtb-group" :class="[`rtb-depth-${depth}`, { 'is-dragging': isMovingThis(), 'is-disabled': isEffectivelyDisabled }]">
     <!-- Group header -->
     <div class="rtb-group-header">
-      <span
+      <button
         v-if="canRemove"
+        type="button"
         class="rtb-drag-handle"
+        aria-label="拖曳移動群組"
         title="拖曳移動群組"
+        :aria-pressed="isKeyboardMoving"
+        aria-keyshortcuts="Enter Space ArrowUp ArrowDown Escape"
         draggable="true"
         @dragstart="onGroupDragStart"
         @dragend="onGroupDragEnd"
-      >⠿</span>
+        @click.prevent
+        @keydown="onKeyboardHandleKeydown"
+      >⠿</button>
 
       <button
         class="rtb-op-toggle"
@@ -171,7 +203,14 @@ function isDraggingThis(): boolean {
           :title="fields.length === 0 ? '請先選擇名單，才能新增群組' : undefined"
           @click="addGroup"
         >+ 群組</button>
-        <button v-if="canRemove" class="rtb-remove-btn" type="button" @click="emit('remove')">✕</button>
+        <button
+          v-if="canRemove"
+          class="rtb-remove-btn"
+          type="button"
+          aria-label="刪除群組"
+          title="刪除群組"
+          @click="emit('remove')"
+        >✕</button>
       </div>
     </div>
 
@@ -186,7 +225,7 @@ function isDraggingThis(): boolean {
         @drop="onDropZone($event, 0)"
       ></div>
 
-      <template v-for="(child, i) in group.children" :key="i">
+      <template v-for="(child, i) in group.children" :key="getNodeKey(child)">
         <RuleTreeGroup
           v-if="isGroup(child)"
           :group="child as RuleGroup"
@@ -238,9 +277,9 @@ function isDraggingThis(): boolean {
       <span>無條件（點擊「+ 規則」新增）</span>
     </div>
 
-    <div v-if="previewForThisNode?.result" class="rtb-preview-result">
+    <div v-if="previewForThisNode?.result" class="rtb-preview-result" role="status" aria-live="polite">
       <strong>{{ canRemove ? '僅套用此規則' : '全部啟用規則' }}：符合 {{ previewForThisNode.result.count.toLocaleString() }} 筆</strong>
     </div>
-    <div v-else-if="previewForThisNode?.error" class="rtb-preview-error">{{ previewForThisNode.error }}</div>
+    <div v-else-if="previewForThisNode?.error" class="rtb-preview-error" role="alert">{{ previewForThisNode.error }}</div>
   </div>
 </template>

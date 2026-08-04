@@ -2,6 +2,13 @@
 import { computed, inject } from 'vue';
 import type { FieldDef, RuleLeaf, Operator, RelativeDateValue, RulePreviewResponse } from './types';
 import { OPERATORS_BY_TYPE, isRelativeDateValue } from './types';
+import {
+  rtbDragStateKey,
+  rtbEndDragKey,
+  rtbStartDragKey,
+} from './ruleTreeContext';
+import RuleTreeMultiSelect from './RuleTreeMultiSelect.vue';
+import { useRuleTreeKeyboardMove } from './useRuleTreeKeyboardMove';
 
 const props = defineProps<{
   leaf: RuleLeaf;
@@ -20,9 +27,12 @@ const emit = defineEmits<{
 }>();
 
 // ── Drag-and-drop inject ─────────────────────────────────────────────────────
-const dragState = inject<{ path: number[] | null }>('rtbDragState')!;
-const startDrag = inject<(path: number[]) => void>('rtbStartDrag')!;
-const endDrag = inject<() => void>('rtbEndDrag')!;
+const dragState = inject(rtbDragStateKey)!;
+const startDrag = inject(rtbStartDragKey)!;
+const endDrag = inject(rtbEndDragKey)!;
+const { isMoving: isKeyboardMoving, onKeydown: onKeyboardHandleKeydown } = useRuleTreeKeyboardMove(
+  () => props.leafPath,
+);
 
 function onDragStart(e: DragEvent) {
   if (e.dataTransfer) {
@@ -44,6 +54,7 @@ const isDragging = computed(() => {
     p.every((v, i) => props.leafPath[i] === v)
   );
 });
+const isMoving = computed(() => isDragging.value || isKeyboardMoving.value);
 
 const isDisabled = computed(() => props.leaf.enabled === false);
 const isEffectivelyDisabled = computed(() => props.ancestorDisabled || isDisabled.value);
@@ -69,6 +80,11 @@ const operators = computed(() => {
   if (!fieldDef.value) return [];
   return OPERATORS_BY_TYPE[fieldDef.value.type] ?? [];
 });
+
+const currentFieldLabel = computed(() => fieldDef.value?.label ?? '條件欄位');
+const currentOperatorLabel = computed(
+  () => operators.value.find((operator) => operator.value === props.leaf.operator)?.label ?? '條件運算子',
+);
 
 const noValue = computed(() =>
   props.leaf.operator === 'is_null' || props.leaf.operator === 'is_not_null',
@@ -111,6 +127,9 @@ function relativeOffsetLabel(offset: number): string {
 // enum with options → multi-select; string/number → comma-separated text input
 const useEnumMultiSelect = computed(
   () => isEnum.value && isMultiValue.value && (fieldDef.value?.options?.length ?? 0) > 0,
+);
+const useSearchableEnumMultiSelect = computed(
+  () => useEnumMultiSelect.value && (fieldDef.value?.options?.length ?? 0) > 10,
 );
 const useTagInput = computed(
   () => isMultiValue.value && !useEnumMultiSelect.value,
@@ -160,10 +179,13 @@ function multiValueAsArray(): string[] {
   return [];
 }
 
-function onMultiValueChange(e: Event) {
-  const select = e.target as HTMLSelectElement;
-  const selected = Array.from(select.selectedOptions).map((o) => o.value);
+function onMultiValueChange(selected: string[]) {
   emit('update', { ...props.leaf, value: selected });
+}
+
+function onNativeMultiValueChange(e: Event) {
+  const select = e.target as HTMLSelectElement;
+  onMultiValueChange(Array.from(select.selectedOptions).map((option) => option.value));
 }
 
 const valuePlaceholder = computed(() => {
@@ -205,41 +227,68 @@ function onTagInputChange(e: Event) {
     class="rtb-leaf"
     :class="{
       'has-multi-select': useEnumMultiSelect,
-      'is-dragging': isDragging,
+      'is-dragging': isMoving,
       'is-disabled': isEffectivelyDisabled,
     }"
   >
-    <span
+    <button
+      type="button"
       class="rtb-drag-handle"
+      aria-label="拖曳移動規則"
       title="拖曳移動規則"
+      :aria-pressed="isKeyboardMoving"
+      aria-keyshortcuts="Enter Space ArrowUp ArrowDown Escape"
       draggable="true"
       @dragstart="onDragStart"
       @dragend="onDragEnd"
-    >⠿</span>
+      @click.prevent
+      @keydown="onKeyboardHandleKeydown"
+    >⠿</button>
 
     <!-- Field select -->
-    <select class="rtb-select rtb-field-select" :value="leaf.field" @change="onFieldChange(($event.target as HTMLSelectElement).value)">
+    <select
+      class="rtb-select rtb-field-select"
+      :value="leaf.field"
+      :aria-label="`條件欄位：${currentFieldLabel}`"
+      @change="onFieldChange(($event.target as HTMLSelectElement).value)"
+    >
       <option value="" disabled>選擇欄位</option>
       <option v-for="f in fields" :key="f.key" :value="f.key">{{ f.label }}</option>
     </select>
 
     <!-- Operator select -->
-    <select class="rtb-select rtb-op-select" :value="leaf.operator" @change="onOperatorChange(($event.target as HTMLSelectElement).value)">
+    <select
+      class="rtb-select rtb-op-select"
+      :value="leaf.operator"
+      :aria-label="`條件運算子：${currentOperatorLabel}`"
+      @change="onOperatorChange(($event.target as HTMLSelectElement).value)"
+    >
       <option v-for="op in operators" :key="op.value" :value="op.value">{{ op.label }}</option>
     </select>
 
     <!-- Value input -->
     <template v-if="!noValue">
       <!-- Enum multi-select (in / not_in with predefined options) -->
+      <RuleTreeMultiSelect
+        v-if="useSearchableEnumMultiSelect"
+        :options="fieldDef?.options ?? []"
+        :model-value="multiValueAsArray()"
+        :field-label="currentFieldLabel"
+        :invalid="hasMissingMultiValue"
+        @update:model-value="onMultiValueChange"
+      />
+
+      <!-- Native multi-select for short enum lists -->
       <select
-        v-if="useEnumMultiSelect"
+        v-else-if="useEnumMultiSelect"
         class="rtb-select rtb-value-select"
         :class="{ 'is-invalid': hasMissingMultiValue }"
         multiple
         :value="multiValueAsArray()"
+        :aria-label="`條件值：${currentFieldLabel}`"
         :aria-invalid="hasMissingMultiValue"
         :title="hasMissingMultiValue ? '請至少選擇一個值' : undefined"
-        @change="onMultiValueChange"
+        @change="onNativeMultiValueChange"
       >
         <option v-for="opt in fieldDef?.options" :key="opt.value" :value="String(opt.value)">
           {{ opt.label }}
@@ -253,10 +302,12 @@ function onTagInputChange(e: Event) {
         :class="{ 'is-invalid': hasMissingMultiValue }"
         type="text"
         :value="tagInputDisplay()"
+        :aria-label="`條件值：${currentFieldLabel}`"
         :aria-invalid="hasMissingMultiValue"
         @change="onTagInputChange"
         :placeholder="valuePlaceholder"
         :title="hasMissingMultiValue ? '請至少輸入一個值' : valuePlaceholder"
+        autocomplete="off"
       />
 
       <!-- Enum single select -->
@@ -264,6 +315,7 @@ function onTagInputChange(e: Event) {
         v-else-if="isEnum"
         class="rtb-select rtb-value-select"
         :value="String(leaf.value ?? '')"
+        :aria-label="`條件值：${currentFieldLabel}`"
         @change="onValueChange(($event.target as HTMLSelectElement).value)"
       >
         <option value="" disabled>選擇值</option>
@@ -277,6 +329,7 @@ function onTagInputChange(e: Event) {
         v-else-if="isBoolean"
         class="rtb-select rtb-value-select"
         :value="String(leaf.value ?? 'true')"
+        :aria-label="`條件值：${currentFieldLabel}`"
         @change="onValueChange(($event.target as HTMLSelectElement).value === 'true')"
       >
         <option value="true">是</option>
@@ -289,6 +342,7 @@ function onTagInputChange(e: Event) {
           type="button"
           class="rtb-date-mode-btn"
           :class="{ 'is-relative': isRelativeDate }"
+          :aria-label="isRelativeDate ? '切換為固定日期' : '切換為相對日期（today±N）'"
           :title="isRelativeDate ? '切換為固定日期' : '切換為相對日期（today±N）'"
           @click="toggleDateMode"
         >{{ isRelativeDate ? '相對' : '固定' }}</button>
@@ -298,8 +352,10 @@ function onTagInputChange(e: Event) {
           class="rtb-input rtb-value-input rtb-relative-offset-input"
           type="number"
           :value="relativeDateOffset()"
+          :aria-label="`相對日期偏移：${currentFieldLabel}`"
           placeholder="0"
           title="正數 = 未來天數，負數 = 過去天數，0 = today"
+          autocomplete="off"
           @change="onRelativeOffsetChange"
         />
         <span v-if="isRelativeDate" class="rtb-relative-date-preview">{{ relativeOffsetLabel(relativeDateOffset()) }}</span>
@@ -309,6 +365,8 @@ function onTagInputChange(e: Event) {
           class="rtb-input rtb-value-input rtb-date-input"
           type="date"
           :value="String(leaf.value ?? '')"
+          :aria-label="`條件值：${currentFieldLabel}`"
+          autocomplete="off"
           @change="onValueChange(($event.target as HTMLInputElement).value)"
         />
       </template>
@@ -319,8 +377,10 @@ function onTagInputChange(e: Event) {
         class="rtb-input rtb-value-input"
         :type="fieldDef?.type === 'number' ? 'number' : 'text'"
         :value="String(leaf.value ?? '')"
+        :aria-label="`條件值：${currentFieldLabel}`"
         @input="onValueChange(fieldDef?.type === 'number' ? Number(($event.target as HTMLInputElement).value) : ($event.target as HTMLInputElement).value)"
         :placeholder="valuePlaceholder"
+        autocomplete="off"
       />
     </template>
 
@@ -345,11 +405,17 @@ function onTagInputChange(e: Event) {
       @click="previewNode"
     >{{ previewForThisNode?.loading ? '計算中…' : '計算筆數' }}</button>
 
-    <button class="rtb-remove-btn" type="button" @click="emit('remove')" title="刪除規則">✕</button>
+    <button
+      class="rtb-remove-btn"
+      type="button"
+      aria-label="刪除規則"
+      title="刪除規則"
+      @click="emit('remove')"
+    >✕</button>
   </div>
-  <div v-if="previewForThisNode?.result" class="rtb-preview-result">
+  <div v-if="previewForThisNode?.result" class="rtb-preview-result" role="status" aria-live="polite">
     <strong>僅套用此規則：符合 {{ previewForThisNode.result.count.toLocaleString() }} 筆</strong>
   </div>
-  <div v-else-if="previewForThisNode?.error" class="rtb-preview-error">{{ previewForThisNode.error }}</div>
+  <div v-else-if="previewForThisNode?.error" class="rtb-preview-error" role="alert">{{ previewForThisNode.error }}</div>
   </div>
 </template>
