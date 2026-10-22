@@ -5,3 +5,5 @@ on: [push, pull_request]
 jobs:
   ci:
     uses: lalalili/.github/.github/workflows/js-package-ci.yml@main
+    with:
+      node-versions: "['26.12.1']"

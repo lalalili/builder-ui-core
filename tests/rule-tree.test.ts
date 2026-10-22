@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { mount } from '@vue/test-utils';
 import RuleTreeBuilder from '../src/components/RuleTreeBuilder.vue';
 import type { FieldDef, RuleGroup, RuleLeaf } from '../src/components/rule-tree/types';

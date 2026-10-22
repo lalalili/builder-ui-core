@@ -1,7 +1,8 @@
 # @lalalili/builder-ui-core
 
 共用的 Vue builder 外殼與規則樹元件。供 `survey-filament`、`email-campaign-filament` 的
-Builder 介面重複使用。此為 npm 套件（非 Composer），透過 pnpm workspace 引用。
+Builder 介面重複使用。此為 npm 套件（非 Composer），保留獨立 workspace；
+Aitehub 透過 Vite alias 編譯此目錄的原始碼。
 
 ## 匯出
 
@@ -27,6 +28,10 @@ import { BuilderShell, RuleTreeBuilder, registerRuleTreeBuilder } from '@lalalil
 
 ## 測試
 
+套件保留獨立的 workspace 與 lockfile，使用 pnpm 12、Vite+ 與 Vitest 5。
+在 Aitehub 根目錄執行以下命令；宿主 CI 也會安裝、測試與稽核此套件。
+
 ```bash
-pnpm --dir packages/builder-ui-core test   # vitest
+./vendor/bin/sail pnpm --dir packages/builder-ui-core install --frozen-lockfile
+./vendor/bin/sail pnpm run test:builder-ui-core
 ```
