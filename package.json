@@ -8,7 +8,9 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "vp test run",
+    "test": "pnpm run test:unit && pnpm run audit:dependencies",
+    "test:unit": "vp test run",
+    "audit:dependencies": "pnpm audit",
     "test:watch": "vp test watch"
   },
   "devDependencies": {
